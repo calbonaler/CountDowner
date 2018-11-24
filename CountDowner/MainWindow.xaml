@@ -1,0 +1,103 @@
+﻿<Window
+	xml:lang="ja-JP"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:local="clr-namespace:CountDowner"
+	x:Class="CountDowner.MainWindow"
+	mc:Ignorable="d"
+	Title="Count Downer"
+	Left="{Binding WindowLeft.Value, Mode=TwoWay}"
+	Top="{Binding WindowTop.Value, Mode=TwoWay}"
+	Width="{Binding WindowWidth.Value, Mode=TwoWay}"
+	Height="{Binding WindowHeight.Value, Mode=TwoWay}"
+	WindowState="{Binding WindowState.Value, Mode=TwoWay}"
+	ShowInTaskbar="False">
+	<Window.Resources>
+		<local:UtcDateTimeConverter x:Key="UtcDateTimeConverter"/>
+		<SolidColorBrush x:Key="BorderBrush" Color="#FF9BA88A"/>
+		<ControlTemplate x:Key="FlatTextBoxTemplate" TargetType="{x:Type TextBox}">
+			<Border x:Name="Bd" CornerRadius="3" BorderBrush="Transparent" BorderThickness="{TemplateBinding BorderThickness}" Background="Transparent" SnapsToDevicePixels="True" UseLayoutRounding="True">
+				<ScrollViewer x:Name="PART_ContentHost" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" Margin="0,2,0,0"/>
+			</Border>
+			<ControlTemplate.Triggers>
+				<Trigger Property="IsEnabled" Value="false">
+					<Setter Property="Background" TargetName="Bd" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+					<Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+				</Trigger>
+				<Trigger Property="IsKeyboardFocusWithin" Value="True">
+					<Setter Property="Background" TargetName="Bd" Value="{Binding Background, RelativeSource={RelativeSource TemplatedParent}}"/>
+					<Setter Property="BorderBrush" TargetName="Bd" Value="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}"/>
+				</Trigger>
+				<Trigger Property="IsMouseOver" Value="True">
+					<Setter Property="BorderBrush" TargetName="Bd" Value="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}"/>
+				</Trigger>
+			</ControlTemplate.Triggers>
+		</ControlTemplate>
+		<ControlTemplate x:Key="FlatButtonTemplate" TargetType="{x:Type Button}">
+			<Border x:Name="Bd" CornerRadius="3" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="Transparent" Background="Transparent" SnapsToDevicePixels="true">
+				<ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+			</Border>
+			<ControlTemplate.Triggers>
+				<Trigger Property="IsEnabled" Value="false">
+					<Setter Property="Foreground" Value="#ADADAD"/>
+				</Trigger>
+				<Trigger Property="IsMouseOver" Value="True">
+					<Setter Property="BorderBrush" TargetName="Bd" Value="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}"/>
+				</Trigger>
+				<Trigger Property="IsPressed" Value="True">
+					<Setter Property="Background" TargetName="Bd" Value="#20000000"/>
+				</Trigger>
+				<Trigger Property="IsDefaulted" Value="True">
+					<Setter Property="BorderBrush" TargetName="Bd" Value="{Binding BorderBrush, RelativeSource={RelativeSource TemplatedParent}}"/>
+				</Trigger>
+			</ControlTemplate.Triggers>
+		</ControlTemplate>
+	</Window.Resources>
+	<i:Interaction.Triggers>
+		<i:EventTrigger EventName="Closed">
+			<i:InvokeCommandAction Command="{Binding SaveConfigurationCommand}"/>
+		</i:EventTrigger>
+	</i:Interaction.Triggers>
+	<Window.DataContext>
+		<local:MainWindowViewModel/>
+	</Window.DataContext>
+	<DockPanel>
+		<DockPanel DockPanel.Dock="Bottom">
+			<Label DockPanel.Dock="Left" Content="更新頻度 (ms): "/>
+			<TextBox Text="{Binding UpdateFrequency.Value}"/>
+		</DockPanel>
+		<ScrollViewer>
+			<StackPanel>
+				<ItemsControl ItemsSource="{Binding Deadlines}">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<Border BorderThickness="1" CornerRadius="3" BorderBrush="{StaticResource BorderBrush}" Background="#FFDAF7B3">
+								<DockPanel>
+									<StackPanel DockPanel.Dock="Right" Margin="5,0,0,0">
+										<Button Padding="3" BorderBrush="{StaticResource BorderBrush}" Foreground="Red" Content="✘" Command="{Binding DataContext.RemoveDeadlineCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" CommandParameter="{Binding}" Template="{StaticResource FlatButtonTemplate}"/>
+										<Button Padding="3" BorderBrush="{StaticResource BorderBrush}" Content="▲" Command="{Binding DataContext.MoveUpDeadlineCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" CommandParameter="{Binding}" Template="{StaticResource FlatButtonTemplate}"/>
+										<Button Padding="3" BorderBrush="{StaticResource BorderBrush}" Content="▼" Command="{Binding DataContext.MoveDownDeadlineCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" CommandParameter="{Binding}" Template="{StaticResource FlatButtonTemplate}"/>
+									</StackPanel>
+									<Grid>
+										<Grid.RowDefinitions>
+											<RowDefinition/>
+											<RowDefinition/>
+											<RowDefinition/>
+										</Grid.RowDefinitions>
+										<TextBox FontSize="18" Grid.Row="0" Text="{Binding Description.Value}" Template="{StaticResource FlatTextBoxTemplate}" BorderBrush="{StaticResource BorderBrush}"/>
+										<TextBlock FontSize="18" Grid.Row="1" TextAlignment="Right" Text="{Binding Remaining.Value, Mode=OneWay, StringFormat=d\\日hh\\時\\間mm\\分ss\\秒ff}"/>
+										<TextBox Grid.Row="2" Text="{Binding Value.Value, Converter={StaticResource UtcDateTimeConverter}}" Template="{StaticResource FlatTextBoxTemplate}" BorderBrush="{StaticResource BorderBrush}"/>
+									</Grid>
+								</DockPanel>
+							</Border>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+				<Button Content="新規作成" Command="{Binding NewDeadlineCommand}"/>
+			</StackPanel>
+		</ScrollViewer>
+	</DockPanel>
+</Window>
